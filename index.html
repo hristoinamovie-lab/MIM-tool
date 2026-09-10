@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menina Movie — Frame Tool (прототип)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>Menina Movie — инструмент за рамки</h1>
+  <p class="subtitle">Локален прототип · не е публикуван</p>
+</header>
+
+<section class="source-panel">
+  <h2>1. Снимка</h2>
+  <div class="source-row">
+    <label class="field">
+      <span>URL на снимка (напр. от TMDB)</span>
+      <input type="url" id="imgUrlInput" placeholder="https://image.tmdb.org/t/p/original/...">
+    </label>
+    <button id="loadUrlBtn" class="btn">Зареди по линк</button>
+    <span class="or">или</span>
+    <label class="btn file-btn">
+      Качи файл
+      <input type="file" id="imgFileInput" accept="image/*" hidden>
+    </label>
+  </div>
+  <p id="sourceStatus" class="status"></p>
+</section>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="tab-frame">Кадър с рамка (1200×675 / 1080×1350)</button>
+  <button class="tab-btn" data-tab="tab-poster">Постер (600×900, без рамка)</button>
+</nav>
+
+<section id="tab-frame" class="tab-panel active">
+  <div class="panel-grid">
+
+    <div class="editor-card" data-slot="wide">
+      <h3>16:9 — изход 1200×675</h3>
+      <div class="canvas-wrap" style="--ratio:1200/675">
+        <canvas class="preview-canvas" width="1200" height="675"></canvas>
+      </div>
+      <div class="controls">
+        <label class="field small">
+          <span>Фон (златен, под снимката)</span>
+          <input type="file" class="bgInput" accept="image/png" data-slot="wide">
+        </label>
+        <label class="field small">
+          <span>Рамка (Add ефект, върху снимката)</span>
+          <input type="file" class="frameInput" accept="image/png" data-slot="wide">
+        </label>
+        <label class="field small">
+          <span>Лого (върху всичко)</span>
+          <input type="file" class="logoInput" accept="image/png" data-slot="wide">
+        </label>
+        <label class="field small">
+          <span>Zoom <span class="zoomVal">100%</span></span>
+          <input type="range" class="zoomSlider" min="1" max="3" step="0.01" value="1">
+        </label>
+        <button class="btn small resetBtn">Нулирай позиция</button>
+      </div>
+      <p class="hint">Провлачи снимката с мишката, ако рамката скрива важна част.</p>
+    </div>
+
+    <div class="editor-card" data-slot="tall">
+      <h3>4:5 — изход 1080×1350</h3>
+      <div class="canvas-wrap" style="--ratio:1080/1350">
+        <canvas class="preview-canvas" width="1080" height="1350"></canvas>
+      </div>
+      <div class="controls">
+        <label class="field small">
+          <span>Фон (златен, под снимката)</span>
+          <input type="file" class="bgInput" accept="image/png" data-slot="tall">
+        </label>
+        <label class="field small">
+          <span>Рамка (Add ефект, върху снимката)</span>
+          <input type="file" class="frameInput" accept="image/png" data-slot="tall">
+        </label>
+        <label class="field small">
+          <span>Лого (върху всичко)</span>
+          <input type="file" class="logoInput" accept="image/png" data-slot="tall">
+        </label>
+        <label class="field small">
+          <span>Zoom <span class="zoomVal">100%</span></span>
+          <input type="range" class="zoomSlider" min="1" max="3" step="0.01" value="1">
+        </label>
+        <button class="btn small resetBtn">Нулирай позиция</button>
+      </div>
+      <p class="hint">Рамката за този формат все още не е качена — качи PNG отгоре.</p>
+    </div>
+
+  </div>
+</section>
+
+<section id="tab-poster" class="tab-panel">
+  <div class="panel-grid single">
+    <div class="editor-card" data-slot="poster">
+      <h3>Постер — изход 600×900 (без рамка)</h3>
+      <div class="canvas-wrap" style="--ratio:600/900">
+        <canvas class="preview-canvas" width="600" height="900"></canvas>
+      </div>
+      <div class="controls">
+        <label class="field small">
+          <span>Zoom <span class="zoomVal">100%</span></span>
+          <input type="range" class="zoomSlider" min="1" max="3" step="0.01" value="1">
+        </label>
+        <button class="btn small resetBtn">Нулирай позиция</button>
+      </div>
+      <p class="hint">Провлачи снимката, за да нагласиш кадрирането за постера.</p>
+    </div>
+  </div>
+</section>
+
+<section class="export-panel">
+  <h2>2. Експорт</h2>
+  <div class="export-row">
+    <label class="field small">
+      <span>Формат</span>
+      <select id="formatSelect">
+        <option value="image/webp">WebP (препоръчано)</option>
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/png">PNG</option>
+      </select>
+    </label>
+    <label class="field small">
+      <span>Качество <span class="qualityVal">92%</span></span>
+      <input type="range" id="qualitySlider" min="0.5" max="1" step="0.01" value="0.92">
+    </label>
+    <button id="exportBtn" class="btn primary">Експортирай наличните изображения</button>
+  </div>
+  <p id="exportStatus" class="status"></p>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>
