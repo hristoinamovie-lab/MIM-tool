@@ -186,10 +186,6 @@ function init() {
     });
   });
 
-  $("#qualitySlider").addEventListener("input", (e) => {
-    $(".qualityVal").textContent = Math.round(parseFloat(e.target.value) * 100) + "%";
-  });
-
   $("#exportBtn").addEventListener("click", exportAll);
 }
 
@@ -350,10 +346,52 @@ function setupDrag(slot) {
   }, { passive: false });
 }
 
-function exportAll() {
+const TARGET_MIN_KB = 90;
+const TARGET_MAX_KB = 400;
+
+function toBlobAsync(canvas, type, quality) {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+// Binary-searches the encoder quality so the exported file lands inside
+// [TARGET_MIN_KB, TARGET_MAX_KB]. PNG is lossless (no quality knob), so it's
+// exported as-is and just reported back. Returns { blob, quality, hitTarget }.
+async function encodeToTarget(canvas, format) {
+  if (format === "image/png") {
+    const blob = await toBlobAsync(canvas, format);
+    return { blob, quality: null, hitTarget: blob.size <= TARGET_MAX_KB * 1024 && blob.size >= TARGET_MIN_KB * 1024 };
+  }
+
+  const maxBytes = TARGET_MAX_KB * 1024;
+  const minBytes = TARGET_MIN_KB * 1024;
+
+  let blob = await toBlobAsync(canvas, format, 1.0);
+  if (blob.size <= maxBytes) {
+    return { blob, quality: 1.0, hitTarget: blob.size >= minBytes };
+  }
+
+  let lo = 0.25, hi = 1.0;
+  let best = null, bestQuality = null;
+  for (let i = 0; i < 8; i++) {
+    const mid = (lo + hi) / 2;
+    blob = await toBlobAsync(canvas, format, mid);
+    if (blob.size > maxBytes) {
+      hi = mid;
+    } else {
+      best = blob; bestQuality = mid; lo = mid;
+      if (blob.size >= minBytes) break;
+    }
+  }
+  if (best) return { blob: best, quality: bestQuality, hitTarget: best.size >= minBytes };
+
+  // Couldn't get under the max even at the lowest tried quality — return that as a best effort.
+  blob = await toBlobAsync(canvas, format, lo);
+  return { blob, quality: lo, hitTarget: false };
+}
+
+async function exportAll() {
   const statusEl = $("#exportStatus");
   const format = $("#formatSelect").value;
-  const quality = parseFloat($("#qualitySlider").value);
   const ext = EXT_BY_TYPE[format];
 
   const ready = Object.values(slots).filter(s => s.img);
@@ -363,31 +401,28 @@ function exportAll() {
   }
 
   setStatus(statusEl, "Експортиране...", "");
-  let done = 0, failed = 0;
+  let failed = 0;
+  const notes = [];
 
-  ready.forEach((slot, i) => {
-    setTimeout(() => {
-      slot.canvas.toBlob((blob) => {
-        if (!blob) {
-          failed++;
-        } else {
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(blob);
-          a.download = `menina-${slot.label}.${ext}`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        }
-        done++;
-        if (done === ready.length) {
-          setStatus(statusEl,
-            failed ? `Готово с грешки: ${failed} файл(а) не успяха (вероятно CORS от URL източник — качи снимката като файл).`
-                   : `Готово — свалени ${done} файл(а).`,
-            failed ? "error" : "ok");
-        }
-      }, format, format === "image/png" ? undefined : quality);
-    }, i * 150);
-  });
+  for (const slot of ready) {
+    const { blob, hitTarget } = await encodeToTarget(slot.canvas, format);
+    if (!blob) { failed++; continue; }
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `menina-${slot.label}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    const kb = Math.round(blob.size / 1024);
+    notes.push(`${slot.label}: ${kb}KB${hitTarget ? "" : " (извън 90–400KB диапазона)"}`);
+  }
+
+  setStatus(statusEl,
+    failed ? `Готово с грешки: ${failed} файл(а) не успяха (вероятно CORS от URL източник — качи снимката като файл).`
+           : `Готово — ${notes.join(" · ")}`,
+    failed ? "error" : "ok");
 }
 
 init();

@@ -125,12 +125,9 @@
         <option value="image/png">PNG</option>
       </select>
     </label>
-    <label class="field small">
-      <span>Качество <span class="qualityVal">92%</span></span>
-      <input type="range" id="qualitySlider" min="0.5" max="1" step="0.01" value="0.92">
-    </label>
     <button id="exportBtn" class="btn primary">Експортирай наличните изображения</button>
   </div>
+  <p class="hint">Качеството се нагласява автоматично, така че всеки файл да излезе между 90 и 400 KB (не важи за PNG — той е без загуби и няма контролируем размер).</p>
   <p id="exportStatus" class="status"></p>
 </section>
 
