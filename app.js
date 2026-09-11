@@ -76,6 +76,16 @@ function detectWindowRect(frameImg, canvasW, canvasH) {
   };
 }
 
+// Some browsers (older Safari in particular) silently fall back to PNG when asked
+// for a canvas.toBlob type they don't support — which produces huge "over 1MB"
+// files with no error. Detect that up front and drop WebP from the picker if so.
+async function detectWebpSupport() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 2;
+  const blob = await toBlobAsync(c, "image/webp", 0.8);
+  return !!blob && blob.type === "image/webp";
+}
+
 function loadImg(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -187,6 +197,21 @@ function init() {
   });
 
   $("#exportBtn").addEventListener("click", exportAll);
+
+  $("#formatSelect").addEventListener("change", () => {
+    Object.values(slots).forEach(scheduleSizeUpdate);
+  });
+
+  detectWebpSupport().then((supported) => {
+    if (supported) return;
+    const select = $("#formatSelect");
+    const webpOption = select.querySelector('option[value="image/webp"]');
+    if (webpOption) webpOption.remove();
+    select.value = "image/jpeg";
+    const note = $("#formatNote");
+    if (note) note.textContent = "WebP не се поддържа в този браузър — ползва се JPEG.";
+    Object.values(slots).forEach(scheduleSizeUpdate);
+  });
 }
 
 function setStatus(el, msg, kind) {
@@ -299,6 +324,8 @@ function render(slot) {
   if (slot.hasFrame && slot.logoImg) {
     ctx.drawImage(slot.logoImg, 0, 0, slot.w, slot.h);
   }
+
+  scheduleSizeUpdate(slot);
 }
 
 function setupDrag(slot) {
@@ -389,14 +416,39 @@ async function encodeToTarget(canvas, format) {
   return { blob, quality: lo, hitTarget: false };
 }
 
+function scheduleSizeUpdate(slot) {
+  if (!slot.card) return;
+  clearTimeout(slot.sizeTimer);
+  slot.sizeTimer = setTimeout(() => updateSizeInfo(slot), 350);
+}
+
+async function updateSizeInfo(slot) {
+  const el = slot.card.querySelector(".sizeInfo");
+  if (!el) return;
+  if (!slot.img) { el.textContent = ""; el.className = "sizeInfo status"; return; }
+
+  const format = $("#formatSelect").value;
+  el.textContent = "пресмятане на размера…";
+  el.className = "sizeInfo status";
+
+  const { blob, hitTarget } = await encodeToTarget(slot.canvas, format);
+  // if the user switched photos/format while this was running, don't show a stale result
+  if ($("#formatSelect").value !== format) return;
+
+  const kb = Math.round(blob.size / 1024);
+  el.textContent = `Очакван размер: ≈ ${kb} KB${hitTarget ? "" : " (извън 90–400KB)"}`;
+  el.className = "sizeInfo status" + (hitTarget ? " ok" : "");
+}
+
 async function exportAll() {
   const statusEl = $("#exportStatus");
   const format = $("#formatSelect").value;
   const ext = EXT_BY_TYPE[format];
 
-  const ready = Object.values(slots).filter(s => s.img);
+  const ready = Object.values(slots).filter(s => s.img && s.card.querySelector(".includeCheckbox").checked);
   if (ready.length === 0) {
-    setStatus(statusEl, "Няма заредена снимка за експорт.", "error");
+    const anyImg = Object.values(slots).some(s => s.img);
+    setStatus(statusEl, anyImg ? "Няма отметнат формат за експорт." : "Няма заредена снимка за експорт.", "error");
     return;
   }
 

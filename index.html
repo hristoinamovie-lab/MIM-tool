@@ -39,7 +39,14 @@
   <div class="panel-grid">
 
     <div class="editor-card" data-slot="wide">
-      <h3>16:9 — изход 1200×675</h3>
+      <div class="card-head">
+        <h3>16:9 — изход 1200×675</h3>
+        <label class="include-toggle">
+          <input type="checkbox" class="includeCheckbox" checked>
+          <span>Включи в експорта</span>
+        </label>
+      </div>
+      <p class="sizeInfo status"></p>
       <div class="canvas-wrap" style="--ratio:1200/675">
         <canvas class="preview-canvas" width="1200" height="675"></canvas>
       </div>
@@ -66,7 +73,14 @@
     </div>
 
     <div class="editor-card" data-slot="tall">
-      <h3>4:5 — изход 1080×1350</h3>
+      <div class="card-head">
+        <h3>4:5 — изход 1080×1350</h3>
+        <label class="include-toggle">
+          <input type="checkbox" class="includeCheckbox" checked>
+          <span>Включи в експорта</span>
+        </label>
+      </div>
+      <p class="sizeInfo status"></p>
       <div class="canvas-wrap" style="--ratio:1080/1350">
         <canvas class="preview-canvas" width="1080" height="1350"></canvas>
       </div>
@@ -98,7 +112,14 @@
 <section id="tab-poster" class="tab-panel">
   <div class="panel-grid single">
     <div class="editor-card" data-slot="poster">
-      <h3>Постер — изход 600×900 (без рамка)</h3>
+      <div class="card-head">
+        <h3>Постер — изход 600×900 (без рамка)</h3>
+        <label class="include-toggle">
+          <input type="checkbox" class="includeCheckbox" checked>
+          <span>Включи в експорта</span>
+        </label>
+      </div>
+      <p class="sizeInfo status"></p>
       <div class="canvas-wrap" style="--ratio:600/900">
         <canvas class="preview-canvas" width="600" height="900"></canvas>
       </div>
@@ -128,6 +149,7 @@
     <button id="exportBtn" class="btn primary">Експортирай наличните изображения</button>
   </div>
   <p class="hint">Качеството се нагласява автоматично, така че всеки файл да излезе между 90 и 400 KB (не важи за PNG — той е без загуби и няма контролируем размер).</p>
+  <p id="formatNote" class="status"></p>
   <p id="exportStatus" class="status"></p>
 </section>
 
