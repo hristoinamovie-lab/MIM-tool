@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Menina Movie — Frame Tool (прототип)</title>
-<link rel="stylesheet" href="style.css?v=3">
+<title>Menina Movie — Frame Tool</title>
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
 <header class="topbar">
   <h1>Menina Movie — инструмент за рамки</h1>
-  <p class="subtitle">Локален прототип · не е публикуван</p>
 </header>
 
 <section class="source-panel">
@@ -30,17 +29,14 @@
   <p id="sourceStatus" class="status"></p>
 </section>
 
-<nav class="tabs">
-  <button class="tab-btn active" data-tab="tab-frame">Кадър с рамка (1200×675 / 1080×1350)</button>
-  <button class="tab-btn" data-tab="tab-poster">Постер (600×900, без рамка)</button>
-</nav>
-
-<section id="tab-frame" class="tab-panel active">
-  <div class="panel-grid">
+<section class="editors-panel">
+  <h2>2. Кадриране</h2>
+  <p class="hint top-hint">Провлачи снимката с мишката (или скролирай за zoom), за да я нагласиш във всеки формат поотделно.</p>
+  <div class="panel-grid three">
 
     <div class="editor-card" data-slot="wide">
       <div class="card-head">
-        <h3>16:9 — изход 1200×675</h3>
+        <h3>16:9 — 1200×675</h3>
         <label class="include-toggle">
           <input type="checkbox" class="includeCheckbox" checked>
           <span>Включи в експорта</span>
@@ -51,30 +47,32 @@
         <canvas class="preview-canvas" width="1200" height="675"></canvas>
       </div>
       <div class="controls">
-        <label class="field small">
-          <span>Фон (златен, под снимката)</span>
-          <input type="file" class="bgInput" accept="image/png" data-slot="wide">
-        </label>
-        <label class="field small">
-          <span>Рамка (Add ефект, върху снимката)</span>
-          <input type="file" class="frameInput" accept="image/png" data-slot="wide">
-        </label>
-        <label class="field small">
-          <span>Лого (върху всичко)</span>
-          <input type="file" class="logoInput" accept="image/png" data-slot="wide">
-        </label>
-        <label class="field small">
+        <label class="field small grow">
           <span>Zoom <span class="zoomVal">100%</span></span>
           <input type="range" class="zoomSlider" min="1" max="3" step="0.01" value="1">
         </label>
         <button class="btn small resetBtn">Нулирай позиция</button>
       </div>
-      <p class="hint">Провлачи снимката с мишката, ако рамката скрива важна част.</p>
+      <details class="layers">
+        <summary>Смяна на слоевете на рамката</summary>
+        <label class="field small">
+          <span>Кант (Normal, върху снимката)</span>
+          <input type="file" class="borderInput" accept="image/png">
+        </label>
+        <label class="field small">
+          <span>Рамка (Add / Linear Dodge)</span>
+          <input type="file" class="frameInput" accept="image/png">
+        </label>
+        <label class="field small">
+          <span>Лого (върху всичко)</span>
+          <input type="file" class="logoInput" accept="image/png">
+        </label>
+      </details>
     </div>
 
     <div class="editor-card" data-slot="tall">
       <div class="card-head">
-        <h3>4:5 — изход 1080×1350</h3>
+        <h3>4:5 — 1080×1350</h3>
         <label class="include-toggle">
           <input type="checkbox" class="includeCheckbox" checked>
           <span>Включи в експорта</span>
@@ -85,35 +83,36 @@
         <canvas class="preview-canvas" width="1080" height="1350"></canvas>
       </div>
       <div class="controls">
-        <label class="field small">
-          <span>Фон (златен, под снимката)</span>
-          <input type="file" class="bgInput" accept="image/png" data-slot="tall">
-        </label>
-        <label class="field small">
-          <span>Рамка (Add ефект, върху снимката)</span>
-          <input type="file" class="frameInput" accept="image/png" data-slot="tall">
-        </label>
-        <label class="field small">
-          <span>Лого (върху всичко)</span>
-          <input type="file" class="logoInput" accept="image/png" data-slot="tall">
-        </label>
-        <label class="field small">
+        <label class="field small grow">
           <span>Zoom <span class="zoomVal">100%</span></span>
           <input type="range" class="zoomSlider" min="1" max="3" step="0.01" value="1">
         </label>
         <button class="btn small resetBtn">Нулирай позиция</button>
       </div>
-      <p class="hint">Рамката за този формат все още не е качена — качи PNG отгоре.</p>
+      <details class="layers">
+        <summary>Смяна на слоевете на рамката</summary>
+        <label class="field small">
+          <span>Фон (златен, под снимката)</span>
+          <input type="file" class="bgInput" accept="image/png">
+        </label>
+        <label class="field small">
+          <span>Кант (Normal, върху снимката)</span>
+          <input type="file" class="borderInput" accept="image/png">
+        </label>
+        <label class="field small">
+          <span>Рамка (Add / Linear Dodge)</span>
+          <input type="file" class="frameInput" accept="image/png">
+        </label>
+        <label class="field small">
+          <span>Лого (върху всичко)</span>
+          <input type="file" class="logoInput" accept="image/png">
+        </label>
+      </details>
     </div>
 
-  </div>
-</section>
-
-<section id="tab-poster" class="tab-panel">
-  <div class="panel-grid single">
     <div class="editor-card" data-slot="poster">
       <div class="card-head">
-        <h3>Постер — изход 600×900 (без рамка)</h3>
+        <h3>Постер — 600×900</h3>
         <label class="include-toggle">
           <input type="checkbox" class="includeCheckbox" checked>
           <span>Включи в експорта</span>
@@ -124,19 +123,20 @@
         <canvas class="preview-canvas" width="600" height="900"></canvas>
       </div>
       <div class="controls">
-        <label class="field small">
+        <label class="field small grow">
           <span>Zoom <span class="zoomVal">100%</span></span>
           <input type="range" class="zoomSlider" min="1" max="3" step="0.01" value="1">
         </label>
         <button class="btn small resetBtn">Нулирай позиция</button>
       </div>
-      <p class="hint">Провлачи снимката, за да нагласиш кадрирането за постера.</p>
+      <p class="hint">Без рамка.</p>
     </div>
+
   </div>
 </section>
 
 <section class="export-panel">
-  <h2>2. Експорт</h2>
+  <h2>3. Експорт</h2>
   <div class="export-row">
     <label class="field small">
       <span>Формат</span>
@@ -146,13 +146,13 @@
         <option value="image/png">PNG</option>
       </select>
     </label>
-    <button id="exportBtn" class="btn primary">Експортирай наличните изображения</button>
+    <button id="exportBtn" class="btn primary">Експортирай отметнатите</button>
   </div>
   <p class="hint">Качеството се нагласява автоматично, така че всеки файл да излезе между 90 и 400 KB (не важи за PNG — той е без загуби и няма контролируем размер).</p>
   <p id="formatNote" class="status"></p>
   <p id="exportStatus" class="status"></p>
 </section>
 
-<script src="app.js?v=3"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>

@@ -1,14 +1,14 @@
 // Menina Movie — Frame Tool prototype
 // No dependencies. Pure Canvas 2D compositing.
 // Linear Dodge (Add) in Photoshop == globalCompositeOperation "lighter" in Canvas.
-// Layer order per framed slot (bottom -> top): bg (normal) -> photo (clipped to window, normal) -> frame (lighter/Add) -> logo (normal)
+// Layer order per framed slot (bottom -> top): bg (normal, optional) -> photo (clipped to window) -> border (normal, optional) -> frame (lighter/Add) -> logo (normal)
 
 const EXT_BY_TYPE = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" };
 
 const slots = {
-  wide:   { canvas: null, ctx: null, w: 1200, h: 675,  img: null, frameImg: null, bgImg: null, logoImg: null, scale: 1, offX: 0, offY: 0, baseScale: 1, label: "kadar-1200x675",  hasFrame: true,  window: null },
-  tall:   { canvas: null, ctx: null, w: 1080, h: 1350, img: null, frameImg: null, bgImg: null, logoImg: null, scale: 1, offX: 0, offY: 0, baseScale: 1, label: "kadar-1080x1350", hasFrame: true,  window: null },
-  poster: { canvas: null, ctx: null, w: 600,  h: 900,  img: null, frameImg: null, bgImg: null, logoImg: null, scale: 1, offX: 0, offY: 0, baseScale: 1, label: "poster-600x900",  hasFrame: false, window: null }
+  wide:   { canvas: null, ctx: null, w: 1200, h: 675,  img: null, frameImg: null, bgImg: null, borderImg: null, logoImg: null, bleed: 0, scale: 1, offX: 0, offY: 0, baseScale: 1, label: "kadar-1200x675",  hasFrame: true,  window: null },
+  tall:   { canvas: null, ctx: null, w: 1080, h: 1350, img: null, frameImg: null, bgImg: null, borderImg: null, logoImg: null, bleed: 0, scale: 1, offX: 0, offY: 0, baseScale: 1, label: "kadar-1080x1350", hasFrame: true,  window: null },
+  poster: { canvas: null, ctx: null, w: 600,  h: 900,  img: null, frameImg: null, bgImg: null, borderImg: null, logoImg: null, bleed: 0, scale: 1, offX: 0, offY: 0, baseScale: 1, label: "poster-600x900",  hasFrame: false, window: null }
 };
 
 let sharedImage = null;
@@ -16,8 +16,13 @@ let sharedImage = null;
 function $(sel, root = document) { return root.querySelector(sel); }
 function $all(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
 
+// The rectangle the photo is fitted, panned and clipped to. When an opaque border
+// layer sits on top of the photo, the photo is extended `bleed` px underneath it so
+// no seam row can ever show between the photo and the border.
 function windowRect(slot) {
-  return slot.window || { x: 0, y: 0, w: slot.w, h: slot.h };
+  const win = slot.window || { x: 0, y: 0, w: slot.w, h: slot.h };
+  const b = slot.bleed || 0;
+  return { x: win.x - b, y: win.y - b, w: win.w + 2 * b, h: win.h + 2 * b };
 }
 
 // Finds the largest fully-transparent axis-aligned rectangle in the frame's alpha
@@ -95,19 +100,23 @@ function loadImg(src) {
   });
 }
 
-async function preloadRealAssets(slot, sizeLabel, windowRectOverride) {
+// Loads the PSD-derived layers for a slot. `files` = { bg?, border?, frame, logo }.
+// `win` is the exact photo window read from the PSD (transparent hole of the border,
+// or the Mask shape for templates without a border layer).
+async function preloadRealAssets(slot, files, win, bleed) {
   try {
-    const [bg, frame, logo] = await Promise.all([
-      loadImg(`assets/bg-${sizeLabel}-real.png`),
-      loadImg(`assets/frame-${sizeLabel}-real.png`),
-      loadImg(`assets/logo-${sizeLabel}-real.png`)
+    const [bg, border, frame, logo] = await Promise.all([
+      files.bg ? loadImg(files.bg) : null,
+      files.border ? loadImg(files.border) : null,
+      loadImg(files.frame),
+      loadImg(files.logo)
     ]);
     slot.bgImg = bg;
+    slot.borderImg = border;
     slot.frameImg = frame;
     slot.logoImg = logo;
-    slot.window = windowRectOverride; // exact photo-window rect read from the source PSD's "Mask" shape
-    const hint = slot.card ? slot.card.querySelector(".hint") : null;
-    if (hint) hint.textContent = "Рамка заредена от PSD шаблона (Linear Dodge / Add).";
+    slot.window = win;
+    slot.bleed = bleed;
     centerImage(slot);
     render(slot);
   } catch (err) { /* demo assets optional */ }
@@ -143,58 +152,46 @@ function init() {
       render(slot);
     });
 
-    const frameInput = card.querySelector(".frameInput");
-    if (frameInput) {
-      frameInput.addEventListener("change", async (e) => {
+    // Optional per-layer overrides (inside the "Смяна на слоевете" section).
+    const bindLayerInput = (selector, apply) => {
+      const input = card.querySelector(selector);
+      if (!input) return;
+      input.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const img = await loadImg(URL.createObjectURL(file));
-        slot.frameImg = img;
-        slot.window = detectWindowRect(img, slot.w, slot.h);
-        const hint = card.querySelector(".hint");
-        if (hint) hint.textContent = `Рамка "${file.name}" заредена (Linear Dodge / Add).`;
+        apply(await loadImg(URL.createObjectURL(file)));
         centerImage(slot);
         render(slot);
       });
-    }
-
-    const bgInput = card.querySelector(".bgInput");
-    if (bgInput) {
-      bgInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        slot.bgImg = await loadImg(URL.createObjectURL(file));
-        render(slot);
-      });
-    }
-
-    const logoInput = card.querySelector(".logoInput");
-    if (logoInput) {
-      logoInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        slot.logoImg = await loadImg(URL.createObjectURL(file));
-        render(slot);
-      });
-    }
+    };
+    bindLayerInput(".bgInput",     (img) => { slot.bgImg = img; });
+    bindLayerInput(".frameInput",  (img) => { slot.frameImg = img; });
+    bindLayerInput(".logoInput",   (img) => { slot.logoImg = img; });
+    // An uploaded border defines the photo window itself: its transparent hole.
+    bindLayerInput(".borderInput", (img) => {
+      slot.borderImg = img;
+      const hole = detectWindowRect(img, slot.w, slot.h);
+      if (hole) { slot.window = hole; slot.bleed = 4; }
+    });
   }
 
-  // preload the real demo assets extracted from the client's PSD templates
-  preloadRealAssets(slots.wide, "1200x675", { x: 49, y: 48, w: 1103, h: 578 });
-  preloadRealAssets(slots.tall, "1080x1350", { x: 64, y: 202, w: 960, h: 1100 });
+  // Real layers exported from the client's PSD templates.
+  // 16:9: opaque border (hole = x50 y50 1100x575) sits over the photo, so the photo bleeds 4px under it.
+  preloadRealAssets(slots.wide, {
+    border: "assets/border-1200x675.png",
+    frame:  "assets/frame-1200x675-real.png",
+    logo:   "assets/logo-1200x675-real.png"
+  }, { x: 50, y: 50, w: 1100, h: 575 }, 4);
+  // 4:5: gold bg under the photo; glow lines already reach the mask edge (x64 y202 960x1100).
+  preloadRealAssets(slots.tall, {
+    bg:    "assets/bg-1080x1350-real.png",
+    frame: "assets/frame-1080x1350-real.png",
+    logo:  "assets/logo-1080x1350-real.png"
+  }, { x: 64, y: 202, w: 960, h: 1100 }, 0);
 
   $("#loadUrlBtn").addEventListener("click", loadFromUrl);
   $("#imgFileInput").addEventListener("change", loadFromFile);
   $("#imgUrlInput").addEventListener("keydown", (e) => { if (e.key === "Enter") loadFromUrl(); });
-
-  $all(".tab-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      $all(".tab-btn").forEach(b => b.classList.remove("active"));
-      $all(".tab-panel").forEach(p => p.classList.remove("active"));
-      btn.classList.add("active");
-      $("#" + btn.dataset.tab).classList.add("active");
-    });
-  });
 
   $("#exportBtn").addEventListener("click", exportAll);
 
@@ -313,6 +310,10 @@ function render(slot) {
     } else {
       ctx.drawImage(slot.img, slot.offX, slot.offY, drawW, drawH);
     }
+  }
+
+  if (slot.hasFrame && slot.borderImg) {
+    ctx.drawImage(slot.borderImg, 0, 0, slot.w, slot.h);
   }
 
   if (slot.hasFrame && slot.frameImg) {

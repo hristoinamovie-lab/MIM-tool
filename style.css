@@ -87,35 +87,23 @@ input[type="range"] { width: 100%; }
 .status.error { color: var(--danger); }
 .status.ok { color: #7fd88f; }
 
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.tab-btn {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  padding: 10px 18px;
-  border-radius: 10px 10px 0 0;
-  cursor: pointer;
-  font-size: 13px;
-}
-.tab-btn.active {
-  color: var(--text);
-  background: var(--panel-2);
-  border-bottom-color: var(--panel-2);
-}
-
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-
 .panel-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 20px;
+  align-items: start;
 }
-.panel-grid.single { grid-template-columns: minmax(240px, 420px); }
+.panel-grid.three { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.8fr); }
+
+.top-hint { margin: 0 0 14px; }
+
+.field.grow { flex: 1; min-width: 120px; }
+
+.layers { margin-top: 12px; font-size: 12px; color: var(--text-dim); }
+.layers summary { cursor: pointer; padding: 4px 0; }
+.layers summary:hover { color: var(--text); }
+.layers .field { margin-top: 8px; }
+.layers input[type="file"] { min-width: 0; width: 100%; }
 
 .editor-card {
   background: var(--panel-2);
@@ -185,6 +173,10 @@ input[type="range"] { width: 100%; }
   flex-wrap: wrap;
 }
 
-@media (max-width: 860px) {
-  .panel-grid { grid-template-columns: 1fr; }
+@media (max-width: 1100px) {
+  .panel-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .panel-grid.three { grid-template-columns: minmax(0, 1fr); }
+  body { padding: 16px 14px 48px; }
 }
